@@ -30,7 +30,7 @@ export abstract class EntityRepository<T extends Document> {
   async findOneAndUpdate(
     query: FilterQuery<T>,
     update: Record<string, unknown>,
-    options: QueryOptions,
+    options?: QueryOptions,
   ): Promise<T | null> {
     return await this.entityModel.findOneAndUpdate(query, update, {
       ...options,

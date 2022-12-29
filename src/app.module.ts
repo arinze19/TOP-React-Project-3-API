@@ -15,7 +15,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         MONGO_URL: Joi.string().required(),
         PORT: Joi.number().default(4500),
         JWT_SECRET: Joi.string().required(),
-        JWT_EXPIRTY_D: Joi.string().default('30d'),
+        JWT_EXP_D: Joi.string().default('30d'),
       }),
       isGlobal: true,
     }),

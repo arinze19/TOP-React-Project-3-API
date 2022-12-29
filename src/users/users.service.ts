@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as shortId from 'short-id';
-import { CreateUserDTO, FilterUserDTO } from './dto';
-import { User, Role } from './entitities';
-import { UserRepository } from './repositories';
 import { HelperService } from 'src/helpers/helpers.service';
+import { CreateUserDTO, FilterUserDTO } from './dto';
+import { User, Role, UserPayload } from './entitities';
+import { UserRepository } from './repositories';
 
 @Injectable()
 export class UserService {
@@ -23,7 +23,7 @@ export class UserService {
     return await this.userRepository.find({ $or: [filters, ...args] });
   }
 
-  async create(payload: CreateUserDTO): Promise<Omit<User, 'password'>> {
+  async create(payload: CreateUserDTO): Promise<User> {
     // check if user exist
     const existingUsers = await this.getUsers(
       { email: payload.email },
@@ -45,12 +45,10 @@ export class UserService {
       role: Role.PLAYER,
     };
 
-    return this.helperService.formatUser(
-      await this.userRepository.save<User>(user),
-    );
+    return await this.userRepository.save<User>(user);
   }
 
-  async getUserById(id: string): Promise<Omit<User, 'password'>> {
+  async getUserById(id: string): Promise<User> {
     const user = this.userRepository.findById(id);
 
     if (!user) {
@@ -58,5 +56,24 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async getUser(payload: Partial<User>): Promise<User> {
+    const user = await this.userRepository.findOne(payload);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async update(currentUser: UserPayload, payload: Partial<User>) {
+    return this.helperService.formatUser(
+      await this.userRepository.findOneAndUpdate(
+        { _id: currentUser._id },
+        payload,
+      ),
+    );
   }
 }

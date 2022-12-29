@@ -19,5 +19,5 @@ export default class CreateUserDTO {
 
   @IsOptional()
   @IsNumber()
-  score: number;
+  score?: number;
 }

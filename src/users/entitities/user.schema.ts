@@ -27,7 +27,7 @@ export class User {
   country: string;
 
   @Prop({ default: 0 })
-  score: number;
+  score?: number;
 
   @Prop({ default: Role.PLAYER })
   role: Role;

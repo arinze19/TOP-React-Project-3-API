@@ -1,8 +1,17 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-// import { AuthGuard } from '@nestjs/passport';
-import { CreateUserDTO, FilterUserDTO } from './dto';
-// import { User } from './entitities';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { FilterUserDTO } from './dto';
+import { User, UserPayload } from './entitities';
 import { UserService } from './users.service';
+import { CurrentUser } from '@core/decorators';
 
 @Controller('users')
 export class UserController {
@@ -12,14 +21,17 @@ export class UserController {
     return this.userService.getUsers(filters);
   }
 
-  // @UseGuards(AuthGuard())
-  @Post()
-  async create(@Body() user: CreateUserDTO) {
-    return this.userService.create(user);
-  }
-
   @Get(':id')
   async getUser(@Param() id: string) {
     return this.userService.getUserById(id);
+  }
+
+  @UseGuards(AuthGuard())
+  @Post()
+  async update(
+    @CurrentUser() user: UserPayload,
+    @Body() payload: Partial<User>,
+  ) {
+    return this.userService.update(user, payload);
   }
 }

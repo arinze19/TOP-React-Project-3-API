@@ -13,10 +13,7 @@ export default class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: UserPayload): any {
-    const { country } = payload;
-    console.log(country);
-
-    return true;
+  validate(payload: UserPayload): UserPayload {
+    return payload;
   }
 }
