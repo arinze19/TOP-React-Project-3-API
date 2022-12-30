@@ -18,10 +18,10 @@ export default class FilterUserDTO {
   score?: number;
 
   @IsOptional()
-  @IsNumber()
-  limit?: number;
+  @IsString()
+  limit?: string;
 
   @IsOptional()
-  @IsNumber()
-  offset?: number;
+  @IsString()
+  offset?: string;
 }

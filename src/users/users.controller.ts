@@ -27,11 +27,12 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard())
-  @Post()
+  @Post(':id')
   async update(
-    @CurrentUser() user: UserPayload,
+    @CurrentUser() currentUser: UserPayload,
+    @Param('id') id: string,
     @Body() payload: Partial<User>,
   ) {
-    return this.userService.update(user, payload);
+    return this.userService.update(currentUser, id, payload);
   }
 }

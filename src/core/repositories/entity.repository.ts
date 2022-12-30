@@ -46,4 +46,11 @@ export abstract class EntityRepository<T extends Document> {
       ...options,
     });
   }
+
+  async countDocuments(
+    query: FilterQuery<T>,
+    options?: QueryOptions,
+  ): Promise<number> {
+    return await this.entityModel.countDocuments(query, options);
+  }
 }

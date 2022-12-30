@@ -2,6 +2,8 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as shortId from 'short-id';
@@ -19,18 +21,44 @@ export class UserService {
   async getUsers(
     filters: FilterUserDTO,
     ...args: Record<string, unknown>[]
-  ): Promise<User[]> {
-    return await this.userRepository.find({ $or: [filters, ...args] });
+  ): Promise<{
+    users: User[];
+    count: number;
+    skip: number;
+    limit: number;
+    page: number;
+  }> {
+    const options = {
+      skip: filters.offset ? +filters.offset : 0,
+      limit: filters.limit ? +filters.limit : 10,
+    };
+
+    const query = { $or: [filters, ...args] };
+
+    const [count, users] = await Promise.all([
+      this.userRepository.countDocuments(query),
+      this.userRepository.find(query, {}, options),
+    ]);
+
+    return {
+      users,
+      count,
+      skip: options.skip,
+      limit: options.limit,
+      page: options.skip / (count + 1) + 1,
+    };
   }
 
   async create(payload: CreateUserDTO): Promise<User> {
-    // check if user exist
-    const existingUsers = await this.getUsers(
+    /**
+     * Check if user exists
+     */
+    const { users } = await this.getUsers(
       { email: payload.email },
       { username: payload.username },
     );
 
-    if (existingUsers.length > 0) {
+    if (users.length > 0) {
       throw new ConflictException(
         'A user with this email or username already exists',
       );
@@ -49,7 +77,7 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<User> {
-    const user = this.userRepository.findById(id);
+    const user = await this.userRepository.findById(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -68,12 +96,48 @@ export class UserService {
     return user;
   }
 
-  async update(currentUser: UserPayload, payload: Partial<User>) {
+  async update(currentUser: UserPayload, id: string, payload: Partial<User>) {
+    const uniqueFields = {
+      username: payload.username ? payload.username : '',
+      email: payload.email ? payload.email : '',
+      role: payload.role ? payload.role : '',
+    };
+
+    const user = await this.getUserById(id);
+
+    /**
+     * prevent users from manipulating others' record
+     */
+    if (user._id !== currentUser._id && user.role !== Role.ADMIN) {
+      throw new UnauthorizedException('Unauthorized action');
+    }
+
+    /**
+     * prevent user from manipulating email & username if they are already in the DB
+     */
+    if (uniqueFields.username || uniqueFields.email) {
+      const { users } = await this.getUsers(
+        { username: uniqueFields.username },
+        { email: uniqueFields.email },
+      );
+
+      if (users.length > 0) {
+        throw new ConflictException(
+          'This username or email already exists, try another?',
+        );
+      }
+    }
+
+    /**
+     * Prevent user from altering their role
+     * TODO: Add Role custom decoractor that allows functionality for only admins
+     */
+    if (uniqueFields.role) {
+      throw new BadRequestException('Sorry, you cannot alter your role');
+    }
+
     return this.helperService.formatUser(
-      await this.userRepository.findOneAndUpdate(
-        { _id: currentUser._id },
-        payload,
-      ),
+      await this.userRepository.findOneAndUpdate({ _id: user._id }, payload),
     );
   }
 }
