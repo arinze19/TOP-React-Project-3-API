@@ -2,8 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
-  BadRequestException,
-  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as shortId from 'short-id';
@@ -51,7 +50,7 @@ export class UserService {
 
   async create(payload: CreateUserDTO): Promise<User> {
     /**
-     * Check if user exists
+     * 409 - Check if user exists and prevent from creating new user if so
      */
     const { users } = await this.getUsers(
       { email: payload.email },
@@ -106,14 +105,14 @@ export class UserService {
     const user = await this.getUserById(id);
 
     /**
-     * prevent users from manipulating others' record
+     * 403 - prevent users from manipulating others' record
      */
     if (user._id !== currentUser._id && user.role !== Role.ADMIN) {
-      throw new UnauthorizedException('Unauthorized action');
+      throw new ForbiddenException('Forbidden action');
     }
 
     /**
-     * prevent user from manipulating email & username if they are already in the DB
+     * 409 - prevent user from manipulating email & username if they are already in the DB
      */
     if (uniqueFields.username || uniqueFields.email) {
       const { users } = await this.getUsers(
@@ -129,11 +128,11 @@ export class UserService {
     }
 
     /**
-     * Prevent user from altering their role
+     * 403 - Prevent user from altering their role
      * TODO: Add Role custom decoractor that allows functionality for only admins
      */
     if (uniqueFields.role) {
-      throw new BadRequestException('Sorry, you cannot alter your role');
+      throw new ForbiddenException('Sorry, you cannot alter your role');
     }
 
     return this.helperService.formatUser(
