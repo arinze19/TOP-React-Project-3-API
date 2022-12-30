@@ -95,7 +95,11 @@ export class UserService {
     return user;
   }
 
-  async update(currentUser: UserPayload, id: string, payload: Partial<User>) {
+  async update(
+    currentUser: UserPayload,
+    id: string,
+    payload: Partial<User>,
+  ): Promise<Omit<User, 'password'>> {
     const uniqueFields = {
       username: payload.username ? payload.username : '',
       email: payload.email ? payload.email : '',

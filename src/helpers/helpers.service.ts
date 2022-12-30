@@ -3,7 +3,7 @@ import { User } from '@users/entitities';
 
 @Injectable()
 export class HelperService {
-  formatUser(user: User) {
+  formatUser(user: User): Omit<User, 'password'> {
     return {
       _id: user._id,
       email: user.email,
