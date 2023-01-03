@@ -23,9 +23,8 @@ export class UserService {
   ): Promise<{
     users: User[];
     count: number;
-    skip: number;
-    limit: number;
     page: number;
+    pages: number;
   }> {
     const options = {
       skip: filters.offset ? +filters.offset : 0,
@@ -42,9 +41,8 @@ export class UserService {
     return {
       users,
       count,
-      skip: options.skip,
-      limit: options.limit,
-      page: options.skip / (count + 1) + 1,
+      page: Math.ceil(options.skip / (count + 1) + 1),
+      pages: Math.ceil(count / options.limit),
     };
   }
 
